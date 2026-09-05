@@ -2,6 +2,7 @@ import base64
 import os
 import time
 import uuid
+from datetime import date
 from pathlib import Path
 
 import streamlit as st
@@ -21,9 +22,33 @@ from core import (
 )
 
 
+PROVINCES = [
+    "An Giang", "Bắc Ninh", "Cà Mau", "Cao Bằng", "Cần Thơ", "Đà Nẵng",
+    "Đắk Lắk", "Điện Biên", "Đồng Nai", "Đồng Tháp", "Gia Lai", "Hà Nội",
+    "Hà Tĩnh", "Hải Phòng", "Huế", "Hưng Yên", "Khánh Hòa", "Lai Châu",
+    "Lâm Đồng", "Lạng Sơn", "Lào Cai", "Nghệ An", "Ninh Bình", "Phú Thọ",
+    "Quảng Ngãi", "Quảng Ninh", "Quảng Trị", "Sơn La", "Tây Ninh",
+    "Thái Nguyên", "Thanh Hóa", "TP. Hồ Chí Minh", "Tuyên Quang", "Vĩnh Long",
+]
+
+
 def go_to(page_number: int):
     st.session_state.page = page_number
     st.rerun()
+
+
+def render_stepbar(step):
+    parts = []
+    for number in range(1, 10):
+        state = "active" if number == step else "done" if number < step else ""
+        parts.append(f'<div class="din-step-node color-{number} {state}">{number}</div>')
+        if number < 9:
+            line_state = "done" if number < step else ""
+            parts.append(f'<div class="din-step-line {line_state}"></div>')
+    st.markdown(
+        f'<div class="din-stepbar">{"".join(parts)}</div>',
+        unsafe_allow_html=True,
+    )
 
 
 def add_digit(d):
@@ -160,7 +185,7 @@ def render_continuous_audio_player(audio_files):
         updateDisplay();
     </script>
     """
-    components.html(html, height=200)
+    components.html(html, height=150)
 
 
 def render_hidden_autoplay_audio(audio_path, trial_number, run_id):
@@ -196,24 +221,137 @@ def render_hidden_autoplay_audio(audio_path, trial_number, run_id):
 
 
 def page_1_intro():
-    st.markdown("<div style='height:18px'></div>", unsafe_allow_html=True)
+    st.markdown("<div style='height:8px'></div>", unsafe_allow_html=True)
 
     if LOGO_FILE.exists():
-        c1, c2, c3 = st.columns([1, 3, 1])
+        c1, c2, c3 = st.columns([0.35, 3, 0.35])
         with c2:
             st.image(str(LOGO_FILE), width=620)
     else:
         st.error(f"Không tìm thấy logo tại: {LOGO_FILE}")
 
-    st.markdown("<div style='height:24px'></div>", unsafe_allow_html=True)
+    st.markdown("<div style='height:12px'></div>", unsafe_allow_html=True)
 
-    c1, c2, c3 = st.columns([1.4, 1.2, 1.4])
+    c1, c2, c3 = st.columns([0.7, 1.6, 0.7])
     with c2:
-        if st.button("Bắt đầu", use_container_width=True):
+        if st.button("Bắt đầu kiểm tra", type="primary", use_container_width=True):
             go_to(2)
 
 
+def page_2_profile():
+    render_stepbar(1)
+    st.markdown("<div style='height:6px'></div>", unsafe_allow_html=True)
+
+    gender_options = ["Chọn giới tính", "Nam", "Nữ"]
+    current_gender = st.session_state.get("gender", "")
+    gender_index = gender_options.index(current_gender) if current_gender in gender_options else 0
+    gender = st.selectbox("Giới tính", gender_options, index=gender_index)
+
+    current_year = st.session_state.get("birth_year")
+    # DIN tự thực hiện phù hợp từ khoảng 6 tuổi, khi trẻ đã nhận biết và nhớ được bộ ba chữ số.
+    year_options = ["Chọn năm sinh"] + list(range(date.today().year - 6, 1919, -1))
+    year_index = year_options.index(current_year) if current_year in year_options else 0
+    birth_year = st.selectbox("Năm sinh", year_options, index=year_index)
+
+    province_options = ["Chọn tỉnh/thành phố"] + PROVINCES
+    current_province = st.session_state.get("province", "")
+    province_index = province_options.index(current_province) if current_province in province_options else 0
+    province = st.selectbox("Nơi ở hiện tại", province_options, index=province_index)
+
+    st.markdown("<div style='height:8px'></div>", unsafe_allow_html=True)
+    c1, c2, c3 = st.columns([1, 0.12, 1])
+    with c1:
+        if st.button("Quay lại", use_container_width=True):
+            go_to(1)
+    with c3:
+        if st.button("Tiếp tục", type="primary", use_container_width=True):
+            if gender == gender_options[0] or birth_year == year_options[0] or province == province_options[0]:
+                st.warning("Vui lòng chọn đầy đủ giới tính, năm sinh và nơi ở.")
+            else:
+                st.session_state["gender"] = gender
+                st.session_state["birth_year"] = birth_year
+                st.session_state["province"] = province
+                go_to(3)
+
+
+def page_3_health():
+    st.markdown(
+        """
+        <style>
+        .block-container{padding-top:.45rem !important;padding-bottom:.65rem !important;}
+        .din-stepbar{margin-bottom:9px !important;padding-top:8px !important;padding-bottom:8px !important;}
+        .din-simple-title{font-size:22px !important;margin:0 0 10px !important;}
+        div[data-testid="stMultiSelect"]{margin-bottom:-4px;}
+        div[data-testid="stMultiSelect"] > label,
+        div[data-testid="stTextInput"] > label{font-size:13px !important;}
+        div[data-testid="stMultiSelect"] div[data-baseweb="select"] > div,
+        div[data-testid="stTextInput"] input{min-height:42px !important;}
+        div[data-testid="stCaptionContainer"]{margin-top:0;margin-bottom:0;}
+        @media(max-height:700px){
+            .din-stepbar{transform:scale(.92);transform-origin:top center;margin-bottom:2px !important;}
+            .din-simple-title{font-size:20px !important;margin-bottom:5px !important;}
+            .stButton > button{min-height:40px !important;}
+        }
+        </style>
+        """,
+        unsafe_allow_html=True,
+    )
+    render_stepbar(2)
+    st.markdown('<div class="din-simple-title">Tình trạng sức khỏe</div>', unsafe_allow_html=True)
+
+    condition_options = [
+        "Không có bệnh lý kèm theo",
+        "Tăng huyết áp hoặc bệnh tim mạch",
+        "Đái tháo đường",
+        "Bệnh thận mạn",
+        "Bệnh tuyến giáp hoặc nội tiết",
+        "Bệnh thần kinh",
+        "Bệnh tự miễn",
+        "Ung thư hoặc từng hóa trị/xạ trị",
+        "Viêm tai giữa hoặc bệnh tai mạn tính",
+        "Đã từng chấn thương vùng đầu/tai",
+        "Đang hoặc từng dùng thuốc có nguy cơ ảnh hưởng sức nghe",
+        "Bệnh lý khác",
+        "Không rõ/không muốn cung cấp",
+    ]
+
+    selected = st.multiselect(
+        "Bệnh lý hiện tại (có thể chọn một hoặc nhiều bệnh)",
+        condition_options,
+        default=[item for item in st.session_state.get("health_conditions", []) if item in condition_options],
+        placeholder="Chạm để chọn một hoặc nhiều mục",
+    )
+
+    other_condition = st.session_state.get("other_condition", "")
+    if "Bệnh lý khác" in selected:
+        other_condition = st.text_input(
+            "Nhập bệnh lý khác",
+            value=other_condition,
+            placeholder="Vui lòng nhập tên bệnh lý",
+        )
+
+    st.caption("Thông tin này không được dùng để chẩn đoán bệnh.")
+    c1, c2, c3 = st.columns([1, 0.12, 1])
+    with c1:
+        if st.button("Quay lại", use_container_width=True):
+            go_to(2)
+    with c3:
+        if st.button("Tiếp tục", type="primary", use_container_width=True):
+            exclusive = {"Không có bệnh lý kèm theo", "Không rõ/không muốn cung cấp"}
+            if not selected:
+                st.warning("Vui lòng chọn ít nhất một mục về tình trạng sức khỏe.")
+            elif len(selected) > 1 and any(item in selected for item in exclusive):
+                st.warning("Mục “Không có bệnh lý” hoặc “Không rõ” không thể chọn cùng các bệnh lý khác.")
+            elif "Bệnh lý khác" in selected and not other_condition.strip():
+                st.warning("Vui lòng nhập tên bệnh lý khác.")
+            else:
+                st.session_state["health_conditions"] = selected
+                st.session_state["other_condition"] = other_condition if "Bệnh lý khác" in selected else ""
+                go_to(4)
+
+
 def page_2_environment():
+    render_stepbar(3)
     st.markdown("<div style='height:24px'></div>", unsafe_allow_html=True)
 
     st.markdown(
@@ -234,55 +372,79 @@ def page_2_environment():
     )
 
     gauge_html = """
+    <style>
+        html,body{margin:0;padding:0;background:transparent !important;overflow:visible;}
+        *{box-sizing:border-box;font-family:'Segoe UI',Tahoma,Arial,sans-serif !important;}
+        button{font-family:'Segoe UI',Tahoma,Arial,sans-serif !important;line-height:1.35;}
+    </style>
     <div style="
         width:100%;
-        max-width:360px;
-        margin:0 auto;
+        max-width:410px;
+        margin:10px auto 0;
         text-align:center;
-        font-family:Arial, sans-serif;
+        font-family:'Segoe UI',Tahoma,Arial,sans-serif;
         background:transparent;
-        padding:0 8px 4px 8px;
+        border:none;
+        border-radius:24px;
+        box-shadow:none;
+        padding:12px 18px 8px;
         box-sizing:border-box;
     ">
+        <div style="font-size:12px;font-weight:800;letter-spacing:.1em;color:#6b879d;text-transform:uppercase;">
+            Đo nhanh môi trường
+        </div>
         <canvas id="gauge" width="330" height="180"
-            style="width:100%;max-width:330px;height:auto;display:block;margin:0 auto;background:transparent;">
+            style="width:100%;max-width:330px;height:auto;display:block;margin:0 auto;
+            background:radial-gradient(circle at 50% 72%,rgba(45,139,204,.13),transparent 45%);">
         </canvas>
 
         <div id="dbValue" style="
-            font-size:32px;
+            font-size:38px;
             font-weight:900;
             color:#64748b;
-            margin-top:-22px;">
+            line-height:1;
+            margin-top:-25px;">
             -- dB
         </div>
 
         <div id="status" style="
-            font-size:15px;
-            font-weight:700;
+            display:inline-block;
+            font-size:14px;
+            font-weight:800;
             color:#64748b;
-            margin-top:0;">
+            background:#eef4f8;
+            border-radius:999px;
+            padding:7px 12px;
+            margin-top:9px;">
             Nhấn để kiểm tra tiếng ồn
         </div>
 
         <button id="startBtn" style="
-            margin-top:8px;
-            background:#0b63ce;
+            width:100%;
+            margin-top:12px;
+            background:linear-gradient(135deg,#075fb8,#0c86d3);
             color:white;
             border:none;
-            border-radius:12px;
-            padding:9px 18px;
+            border-radius:14px;
+            padding:12px 18px;
             font-size:15px;
             font-weight:800;
             cursor:pointer;
-            box-shadow:0 4px 10px rgba(11,99,206,0.22);">
-            🎤 Kiểm tra tiếng ồn
+            box-shadow:0 8px 18px rgba(11,99,206,0.22);">
+            <span style="display:inline-flex;align-items:center;justify-content:center;gap:8px;">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                    <rect x="9" y="3" width="6" height="11" rx="3" fill="white"/>
+                    <path d="M6.5 11.5a5.5 5.5 0 0 0 11 0M12 17v4M9 21h6" stroke="white" stroke-width="2" stroke-linecap="round"/>
+                </svg>
+                Kiểm tra tiếng ồn
+            </span>
         </button>
 
         <div style="
-            margin-top:6px;
-            font-size:12px;
-            color:#777;
-            line-height:1.3;">
+            margin-top:5px;
+            font-size:11px;
+            color:#748596;
+            line-height:1.35;">
             Kết quả chỉ mang tính tham khảo, không thay thế thiết bị đo chuyên dụng.
         </div>
     </div>
@@ -308,23 +470,35 @@ def page_2_environment():
 
         const cx = 165;
         const cy = 145;
-        const rOuter = 98;
+        const rOuter = 101;
         const rLabel = 72;
 
-        for(let i = 0; i <= 80; i += 2){
-            const a = Math.PI + (i / 80) * Math.PI;
-            const x = cx + rOuter * Math.cos(a);
-            const y = cy + rOuter * Math.sin(a);
-
-            let col = "#22c55e";
-            if(i > 35) col = "#facc15";
-            if(i > 50) col = "#ef4444";
-
+        function arc(from, to, color, width){
             ctx.beginPath();
-            ctx.arc(x, y, i % 10 === 0 ? 4.4 : 3.0, 0, 2 * Math.PI);
-            ctx.fillStyle = col;
-            ctx.fill();
+            ctx.arc(cx, cy, rOuter, Math.PI + (from / 80) * Math.PI, Math.PI + (to / 80) * Math.PI);
+            ctx.strokeStyle = color;
+            ctx.lineWidth = width;
+            ctx.lineCap = "round";
+            ctx.stroke();
         }
+
+        ctx.save();
+        ctx.shadowColor = "rgba(25,56,78,.22)";
+        ctx.shadowBlur = 12;
+        ctx.shadowOffsetY = 7;
+        arc(0, 80, "#e5edf3", 18);
+        ctx.restore();
+
+        arc(0, 34, "#36b978", 14);
+        arc(36, 49, "#f2b83f", 14);
+        arc(51, 80, "#ed6570", 14);
+
+        ctx.save();
+        ctx.globalAlpha = .48;
+        arc(1, 33, "#8be0b2", 4);
+        arc(37, 48, "#ffe49a", 4);
+        arc(52, 79, "#ffadb3", 4);
+        ctx.restore();
 
         const safeA = Math.PI + (35 / 80) * Math.PI;
         ctx.beginPath();
@@ -365,19 +539,35 @@ def page_2_environment():
         ctx.beginPath();
         ctx.moveTo(cx, cy);
         ctx.lineTo(nx, ny);
-        ctx.lineWidth = 5;
-        ctx.strokeStyle = "#0f172a";
+        ctx.lineWidth = 6;
+        const needleGradient = ctx.createLinearGradient(cx, cy, nx, ny);
+        needleGradient.addColorStop(0, "#071e31");
+        needleGradient.addColorStop(1, "#39779e");
+        ctx.strokeStyle = needleGradient;
         ctx.lineCap = "round";
+        ctx.shadowColor = "rgba(15,50,75,.25)";
+        ctx.shadowBlur = 6;
         ctx.stroke();
+        ctx.shadowBlur = 0;
 
+        const hub = ctx.createRadialGradient(cx - 4, cy - 5, 2, cx, cy, 15);
+        hub.addColorStop(0, "#ffffff");
+        hub.addColorStop(.2, "#8fb8d1");
+        hub.addColorStop(.45, "#284f69");
+        hub.addColorStop(1, "#071e31");
         ctx.beginPath();
-        ctx.arc(cx, cy, 13, 0, 2 * Math.PI);
-        ctx.fillStyle = "#0f172a";
+        ctx.arc(cx, cy, 15, 0, 2 * Math.PI);
+        ctx.fillStyle = hub;
+        ctx.shadowColor = "rgba(5,25,40,.35)";
+        ctx.shadowBlur = 9;
+        ctx.shadowOffsetY = 4;
         ctx.fill();
+        ctx.shadowBlur = 0;
+        ctx.shadowOffsetY = 0;
 
         ctx.beginPath();
-        ctx.arc(cx, cy, 5, 0, 2 * Math.PI);
-        ctx.fillStyle = "#ffffff";
+        ctx.arc(cx - 3, cy - 4, 4, 0, 2 * Math.PI);
+        ctx.fillStyle = "rgba(255,255,255,.88)";
         ctx.fill();
     }
 
@@ -405,14 +595,17 @@ def page_2_environment():
         if(val <= 35){
             dbText.style.color = "#16a34a";
             status.style.color = "#16a34a";
+            status.style.background = "#eaf9f0";
             status.innerText = "Môi trường yên tĩnh";
         }else if(val <= 50){
             dbText.style.color = "#d97706";
             status.style.color = "#d97706";
+            status.style.background = "#fff7df";
             status.innerText = "Có tiếng ồn nhẹ";
         }else{
             dbText.style.color = "#dc2626";
             status.style.color = "#dc2626";
+            status.style.background = "#fff0f1";
             status.innerText = "Tiếng ồn cao";
         }
 
@@ -454,19 +647,20 @@ def page_2_environment():
     </script>
     """
 
-    components.html(gauge_html, height=300)
+    components.html(gauge_html, height=390)
 
     c1, c2, c3 = st.columns([1.2, 0.4, 1.2])
     with c1:
         if st.button("Quay lại", use_container_width=True):
-            go_to(1)
+            go_to(3)
     with c3:
         if st.button("Tiếp tục", use_container_width=True):
-            go_to(3)
+            go_to(5)
 
 
 def page_3_headphone_confirm():
-    st.markdown("<div style='height:120px'></div>", unsafe_allow_html=True)
+    render_stepbar(4)
+    st.markdown("<div style='height:28px'></div>", unsafe_allow_html=True)
 
     checked = st.checkbox(
         "Đã đeo tai nghe",
@@ -474,21 +668,22 @@ def page_3_headphone_confirm():
     )
     st.session_state["headphone_confirmed"] = checked
 
-    st.markdown("<div style='height:55px'></div>", unsafe_allow_html=True)
+    st.markdown("<div style='height:12px'></div>", unsafe_allow_html=True)
 
     c1, c2, c3 = st.columns([1.2, 0.4, 1.2])
     with c1:
         if st.button("Quay lại", use_container_width=True):
-            go_to(2)
+            go_to(4)
     with c3:
         if st.button("Xác nhận", use_container_width=True):
             if checked:
-                go_to(4)
+                go_to(6)
             else:
                 st.warning("Vui lòng xác nhận đã đeo tai nghe.")
 
 
 def page_4_volume_setup():
+    render_stepbar(5)
     st.markdown("<div style='height:24px'></div>", unsafe_allow_html=True)
     st.markdown(
         """
@@ -513,35 +708,46 @@ def page_4_volume_setup():
     else:
         st.error(f"Không tìm thấy file âm thanh thử cho {voice}")
 
-    st.markdown("<div style='height:16px'></div>", unsafe_allow_html=True)
+    st.markdown(
+        """
+        <div style="max-width:720px;margin:-10px auto 10px;padding:11px 14px;border-radius:14px;
+        background:#fff7e7;border:1px solid #f3d18a;color:#7a5210;font-size:14px;line-height:1.5;text-align:center;">
+            <strong>Lưu ý:</strong> Nếu đã chỉnh âm lượng thiết bị lên mức tối đa nhưng vẫn không nghe rõ,
+            có thể bạn đang gặp vấn đề về nghe. Bạn nên thực hiện kiểm tra sức nghe tại cơ sở chuyên khoa.
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
 
     c1, c2, c3 = st.columns([1.2, 0.4, 1.2])
     with c1:
         if st.button("Quay lại", use_container_width=True):
-            go_to(3)
+            go_to(5)
     with c3:
         if st.button("Tiếp tục", use_container_width=True):
-            go_to(5)
+            go_to(7)
 
 
 def page_5_choose_voice():
-    st.markdown("<div style='height:70px'></div>", unsafe_allow_html=True)
+    render_stepbar(6)
+    st.markdown("<div style='height:4px'></div>", unsafe_allow_html=True)
 
     voice = st.radio(
-        "",
+        "Chọn giọng đọc",
         ["Giọng Miền Bắc", "Giọng Miền Trung", "Giọng Miền Nam"],
         index=["Giọng Miền Bắc", "Giọng Miền Trung", "Giọng Miền Nam"].index(
             st.session_state.get("selected_voice", "Giọng Miền Bắc")
-        )
+        ),
+        label_visibility="collapsed",
     )
     st.session_state["selected_voice"] = voice
 
-    st.markdown("<div style='height:20px'></div>", unsafe_allow_html=True)
+    st.markdown("<div style='height:12px'></div>", unsafe_allow_html=True)
 
     c1, c2, c3 = st.columns([1.2, 0.3, 1.2])
     with c1:
         if st.button("Quay lại", use_container_width=True):
-            go_to(4)
+            go_to(6)
     with c3:
         if st.button("Tiếp tục", use_container_width=True):
             cleanup_old_trial_audio()
@@ -550,12 +756,13 @@ def page_5_choose_voice():
             st.session_state["selected_voice"] = voice
             st.session_state["test_run_id"] = uuid.uuid4().hex
             st.session_state["trial1_started"] = False
-            go_to(6)
+            go_to(8)
 
 
 def page_6_instruction():
+    render_stepbar(7)
     # Tăng khoảng cách phía trên để không bị mất dòng hướng dẫn
-    st.markdown("<div style='height:42px'></div>", unsafe_allow_html=True)
+    st.markdown("<div style='height:12px'></div>", unsafe_allow_html=True)
 
     st.markdown(
         """
@@ -740,16 +947,16 @@ def page_6_instruction():
 
     components.html(demo_html, height=245)
 
-    st.markdown("<div style='margin-top:-18px'></div>", unsafe_allow_html=True)
+    st.markdown("<div style='height:4px'></div>", unsafe_allow_html=True)
 
     c1, c2, c3 = st.columns([1.2, 0.4, 1.2])
     with c1:
         if st.button("Quay lại", use_container_width=True):
-            go_to(5)
+            go_to(7)
     with c3:
         if st.button("Bắt đầu lượt đo", use_container_width=True):
             st.session_state["trial1_started"] = False
-            go_to(7)
+            go_to(9)
 
 
 def ensure_trial_generated():
@@ -844,34 +1051,72 @@ def page_7_main_test():
     audio_path = st.session_state.get("trial_audio_path")
     run_id = st.session_state.get("test_run_id", "default_run")
 
+    render_stepbar(8)
+
     st.markdown("<div style='height:10px'></div>", unsafe_allow_html=True)
 
     if trial == 1 and not st.session_state.get("trial1_started", False):
         overlay = st.empty()
+        countdown_colors = {
+            5: ("#2468d8", "#76c7ff"),
+            4: ("#7048c8", "#c39cff"),
+            3: ("#079f91", "#64e5d2"),
+            2: ("#e09118", "#ffd66a"),
+            1: ("#db3d64", "#ff91aa"),
+        }
 
         for sec in [5, 4, 3, 2, 1]:
+            deep_color, light_color = countdown_colors[sec]
             overlay.markdown(
                 f"""
+                <style>
+                    @keyframes countEnter {{
+                        0% {{opacity:0;transform:translateY(20px) scale(.72);filter:blur(7px);}}
+                        55% {{opacity:1;transform:translateY(-5px) scale(1.07);filter:blur(0);}}
+                        100% {{opacity:1;transform:translateY(0) scale(1);}}
+                    }}
+                    .din-count-number {{
+                        font-family:'Segoe UI',Arial,sans-serif;
+                        font-size:clamp(118px,22vw,180px);
+                        font-weight:1000;
+                        line-height:.9;
+                        letter-spacing:-.08em;
+                        padding-right:.08em;
+                        color:{light_color};
+                        background:linear-gradient(155deg,#ffffff 0%,{light_color} 22%,{deep_color} 64%,#082a50 115%);
+                        -webkit-background-clip:text;
+                        background-clip:text;
+                        -webkit-text-fill-color:transparent;
+                        filter:drop-shadow(0 16px 13px {deep_color}4d);
+                        text-shadow:
+                            1px 1px 0 {deep_color},
+                            2px 2px 0 {deep_color},
+                            3px 3px 0 {deep_color},
+                            4px 4px 0 {deep_color},
+                            5px 5px 0 {deep_color},
+                            8px 12px 18px {deep_color}66;
+                        animation:countEnter .42s cubic-bezier(.2,.8,.2,1) both;
+                    }}
+                </style>
                 <div style="
                     position:fixed;
                     z-index:999999;
                     inset:0;
-                    background:white;
+                    background:
+                        linear-gradient(125deg,{light_color}15 0%,transparent 34%),
+                        linear-gradient(305deg,{deep_color}12 0%,transparent 38%),
+                        linear-gradient(160deg,#f8fcff,#eef6fc);
                     display:flex;
                     align-items:center;
                     justify-content:center;
                     flex-direction:column;">
-                    <div style="
-                        font-size:72px;
-                        font-weight:900;
-                        color:#004aad;
-                        line-height:1;">
+                    <div class="din-count-number">
                         {sec}
                     </div>
                     <div style="
-                        margin-top:12px;
+                        margin-top:25px;
                         font-size:20px;
-                        font-weight:700;
+                        font-weight:800;
                         color:#334155;">
                         Chuẩn bị nghe
                     </div>
@@ -902,7 +1147,7 @@ def page_7_main_test():
         with c1:
             if st.button("Quay lại", use_container_width=True):
                 cleanup_old_trial_audio()
-                go_to(6)
+                go_to(8)
 
         with c3:
             if st.button("Kế tiếp", use_container_width=True):
@@ -930,7 +1175,7 @@ def page_7_main_test():
 
                 if trial >= TOTAL_TRIALS:
                     st.session_state["final_snr"] = calculate_final_snr(st.session_state["snr_history"])
-                    st.session_state["page"] = 8
+                    st.session_state["page"] = 10
                     st.session_state["current_digits"] = []
                     st.session_state["typed_digits"] = ""
                     st.rerun()
@@ -943,11 +1188,14 @@ def page_7_main_test():
 
 
 def page_8_result():
-    st.markdown("<div style='height:24px'></div>", unsafe_allow_html=True)
+    render_stepbar(9)
+    st.markdown("<div style='height:10px'></div>", unsafe_allow_html=True)
     st.markdown(
         """
-        <div style="font-size:30px; font-weight:800; text-align:center; margin-bottom:4px;">
-            Kết quả
+        <div class="din-card" style="margin-bottom:14px;">
+            <div class="din-kicker">Hoàn thành bài đo</div>
+            <div class="din-title">Kết quả sàng lọc</div>
+            <div class="din-subtitle" style="margin-bottom:0;">Điểm đo của bạn được hiển thị bên dưới.</div>
         </div>
         """,
         unsafe_allow_html=True
@@ -956,23 +1204,31 @@ def page_8_result():
     final_snr = st.session_state.get("final_snr", None)
 
     if final_snr is None:
-        st.warning("Chưa đủ dữ liệu để tính SRT theo điểm đảo chiều.")
+        st.warning(
+            "Không đủ điểm đảo chiều để tính kết quả SRT. Có thể bạn thực hiện chưa đúng hoặc đang gặp "
+            "vấn đề về nghe. Bạn cần đến Bệnh viện Tai Mũi Họng TP.HCM để kiểm tra và đánh giá sức nghe."
+        )
     else:
         st.markdown(
             f"""
             <div style="
                 text-align:center;
-                font-size:24px;
-                font-weight:700;
-                color:#0b63ce;
-                margin:6px auto 12px auto;
-                max-width:720px;
+                margin:8px auto 16px auto;
+                max-width:370px;
                 width:100%;
+                padding:13px 12px;
                 box-sizing:border-box;
-                overflow-wrap:break-word;
-                word-break:normal;
-                white-space:normal;">
-                SRT: {final_snr} dB SNR
+                border-radius:18px;
+                color:white;
+                background:linear-gradient(135deg,#075fb8,#0b86d4);
+                box-shadow:0 12px 28px rgba(7,95,184,.22);">
+                <div style="font-size:13px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;opacity:.85;">
+                    Điểm của bài đo
+                </div>
+                <div style="font-size:32px;line-height:1.15;font-weight:900;margin:4px 0 1px;">
+                    {final_snr}
+                </div>
+                <div style="font-size:16px;font-weight:750;opacity:.92;">dB SNR (SRT)</div>
             </div>
             """,
             unsafe_allow_html=True
@@ -1053,7 +1309,7 @@ def page_8_result():
             unsafe_allow_html=True
         )
 
-    st.markdown("<div style='height:18px'></div>", unsafe_allow_html=True)
+    st.markdown("<div style='height:12px'></div>", unsafe_allow_html=True)
 
     c1, c2, c3 = st.columns([1.4, 0.9, 1.4])
     with c2:
