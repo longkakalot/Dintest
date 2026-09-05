@@ -1,12 +1,15 @@
 import random
 import re
 import tempfile
+import shutil
 from pathlib import Path
 
 from pydub import AudioSegment
 
-# ffmpeg
-AudioSegment.converter = r"D:\ffmpeg\bin\ffmpeg.exe"
+# ffmpeg: dùng executable có sẵn trên hệ thống (local hoặc cloud)
+_ffmpeg = shutil.which("ffmpeg")
+if _ffmpeg:
+    AudioSegment.converter = _ffmpeg
 
 BASE_DIR = Path(__file__).resolve().parent
 PROJECT_DIR = BASE_DIR.parent
@@ -29,9 +32,9 @@ TARGET_SPEECH_DBFS = -19.3529
 MAX_OUTPUT_PEAK_DBFS = -6.0
 
 VOICE_MAP = {
-    "Giọng Miền Bắc": DIGITS_DIR / "Giọng Miền Bắc",
-    "Giọng Miền Trung": DIGITS_DIR / "Giọng Miền Trung",
-    "Giọng Miền Nam": DIGITS_DIR / "Giọng Miền Nam",
+    "Giọng Miền Bắc": DIGITS_DIR / "bac",
+    "Giọng Miền Trung": DIGITS_DIR / "trung",
+    "Giọng Miền Nam": DIGITS_DIR / "nam",
 }
 
 
