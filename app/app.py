@@ -82,10 +82,19 @@ st.markdown(
     .din-title{font-size:27px;line-height:1.2;font-weight:850;color:var(--din-navy);text-align:center;margin:7px 0 8px;text-transform:uppercase;letter-spacing:.025em;}
     .din-subtitle{font-size:15px;line-height:1.55;color:#607386;text-align:center;margin:0 0 16px;}
 
+    div[data-testid="stColumn"],
     div[data-testid="column"]{
         padding-left: 0.03rem !important;
         padding-right: 0.03rem !important;
     }
+
+    .st-key-keypad-wrap,
+    .st-key-test-nav{max-width:440px;margin-left:auto;margin-right:auto;}
+    .st-key-intro-action{max-width:420px;margin-left:auto;margin-right:auto;}
+    .st-key-intro-logo{width:100%;max-width:420px;margin-left:auto;margin-right:auto;}
+    .st-key-intro-logo div[data-testid="stImage"]{width:100%;display:flex;justify-content:center;}
+    .st-key-intro-logo img{width:100% !important;max-width:420px !important;height:auto !important;object-fit:contain;}
+    .st-key-result-action{max-width:320px;margin-left:auto;margin-right:auto;}
 
     .stButton > button{
         border-radius:12px !important;
@@ -128,8 +137,38 @@ st.markdown(
     div[data-testid="stAlert"]{border-radius:14px;margin:.15rem 0;}
     div[data-testid="stCaptionContainer"]{margin:.1rem 0 .2rem;}
     img{max-width:100%;height:auto;}
+    div[data-testid="stImage"]{display:flex;justify-content:center;}
 
     div[data-testid="stProgress"]{margin-top:.2rem;}
+    .din-volume-instruction{font-size:clamp(16px,2.1vw,20px);line-height:1.45;}
+    .din-volume-note{font-size:13px;line-height:1.35;}
+    .din-test-instruction{font-size:18px;line-height:1.4;}
+
+    /* Toàn bộ st.columns trong ứng dụng là hàng điều hướng 2 nút.
+       Khóa thành grid cân giữa để không lệch trên laptop/tablet. */
+    div[data-testid="stHorizontalBlock"]{
+        display:grid !important;
+        grid-template-columns:repeat(2,minmax(0,1fr)) !important;
+        gap:1rem !important;
+        width:100% !important;
+        max-width:540px;
+        margin-left:auto !important;
+        margin-right:auto !important;
+        align-items:stretch !important;
+    }
+    div[data-testid="stHorizontalBlock"] > div[data-testid="stColumn"],
+    div[data-testid="stHorizontalBlock"] > div[data-testid="column"]{
+        width:100% !important;
+        min-width:0 !important;
+        flex:none !important;
+    }
+    .st-key-keypad-wrap div[data-testid="stHorizontalBlock"]{
+        grid-template-columns:repeat(3,minmax(0,1fr)) !important;
+        max-width:440px;
+        gap:.5rem !important;
+    }
+    .st-key-keypad-wrap div[data-testid="stVerticalBlock"]{gap:.28rem !important;}
+    .din-keypad-display{height:34px !important;margin-bottom:2px !important;}
 
     @media (max-width: 820px){
         .block-container{max-width:700px;padding:1rem 1.1rem 2rem;}
@@ -137,7 +176,7 @@ st.markdown(
     }
 
     @media (max-width: 520px){
-        .block-container{padding:.55rem .8rem 1.5rem;}
+        .block-container{width:100% !important;max-width:100% !important;padding:.35rem .55rem .75rem !important;overflow-x:hidden;}
         .block-container > div[data-testid="stVerticalBlock"]{gap:.62rem;}
         .din-card{padding:19px 15px;border-radius:18px;}
         .din-title{font-size:24px;}
@@ -146,7 +185,24 @@ st.markdown(
         .din-step-node.active{box-shadow:0 0 0 3px rgba(7,95,184,.12);}
         .din-step-line{min-width:4px;height:2px;}
         .din-simple-title{font-size:22px;margin-bottom:16px;}
-        div[data-testid="column"]{min-width:0 !important;}
+        .din-volume-instruction{font-size:16px !important;line-height:1.35 !important;margin-bottom:4px !important;}
+        .din-volume-note{font-size:11px !important;line-height:1.25 !important;padding:6px 8px !important;margin-top:-4px !important;}
+        .din-test-instruction{font-size:16px !important;line-height:1.32 !important;}
+        div[data-testid="stColumn"],div[data-testid="column"]{min-width:0 !important;}
+        .st-key-keypad-wrap,.st-key-test-nav{width:100%;max-width:370px;}
+        .block-container [style*="font-size:22px"]{font-size:16px !important;line-height:1.4 !important;}
+        .stButton > button{min-height:42px !important;padding:.4rem .45rem !important;font-size:14px !important;}
+        .st-key-keypad-wrap .stButton > button{min-height:34px !important;padding:.18rem .35rem !important;}
+        .st-key-test-nav .stButton > button{min-height:38px !important;padding:.28rem .4rem !important;}
+    }
+
+    @media (min-width:521px) and (max-width:900px){
+        .block-container{width:100% !important;max-width:760px !important;padding:.75rem 1rem 1.2rem !important;}
+    }
+
+    @media (max-width:520px){
+        div[data-testid="stHorizontalBlock"]{gap:.55rem !important;max-width:100%;}
+        .st-key-keypad-wrap div[data-testid="stHorizontalBlock"]{gap:.35rem !important;}
     }
     </style>
     """,
